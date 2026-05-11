@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { runCommand, getCommandNames } from '@/lib/commands';
+import { runCommand, getCommandNames, getCompletions } from '@/lib/commands';
 import type { CommandContext, Lang, Theme } from '@/lib/types';
 import { TRANSLATIONS } from '@/lib/i18n';
 import MatrixOverlay from './MatrixOverlay';
@@ -301,15 +301,31 @@ export default function Terminal() {
     }
     if (e.key === 'Tab') {
       e.preventDefault();
-      const trimmed = input.trim();
-      if (!trimmed) return;
-      const names = getCommandNames();
-      const matches = names.filter((n) => n.startsWith(trimmed));
+      const { matches, prefix } = getCompletions(input, cwd);
+      if (matches.length === 0) return;
       if (matches.length === 1) {
-        setInput(matches[0] + ' ');
-      } else if (matches.length > 1) {
-        pushLine(<PromptDisplay cwd={cwd} cmd={trimmed} />);
-        pushLine(<div>{matches.map((m, i) => <span key={i} className="chip">{m}</span>)}</div>);
+        const match = matches[0];
+        // No trailing space after directories — user often wants to keep typing
+        const trailing = match.endsWith('/') ? '' : ' ';
+        setInput(prefix + match + trailing);
+      } else {
+        // Multiple matches → show them and try longest-common-prefix completion
+        const lcp = longestCommonPrefix(matches);
+        const currentToken = input.slice(prefix.length);
+        if (lcp.length > currentToken.length) {
+          // Extend input to the LCP so user doesn't retype shared chars
+          setInput(prefix + lcp);
+        }
+        pushLine(<PromptDisplay cwd={cwd} cmd={input} />);
+        pushLine(
+          <div>
+            {matches.map((m, i) => (
+              <span key={i} className="chip" onClick={() => setInput(prefix + m + (m.endsWith('/') ? '' : ' '))}>
+                {m}
+              </span>
+            ))}
+          </div>,
+        );
         pushLine(<div className="line spacer" />);
       }
       return;
@@ -433,6 +449,18 @@ function PromptDisplay({ cwd, cmd }: { cwd: string; cmd: string }) {
       <span className="c-bright">{cmd}</span>
     </div>
   );
+}
+
+function longestCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return '';
+  let prefix = strings[0];
+  for (let i = 1; i < strings.length; i++) {
+    while (!strings[i].startsWith(prefix)) {
+      prefix = prefix.slice(0, -1);
+      if (prefix === '') return '';
+    }
+  }
+  return prefix;
 }
 
 function AnimatedAscii({ art, delayPerLineMs = 80 }: { art: string; delayPerLineMs?: number }) {

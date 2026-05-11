@@ -736,16 +736,42 @@ const COMMANDS: Record<string, Command> = {
   sudo: {
     name: 'sudo',
     description: { en: '...nice try', es: '...nada' },
-    run: (_args, ctx) => (
-      <div>
-        <div className="c-pink">[sudo] password for oscar:</div>
-        <div className="c-dim" style={{ marginTop: 4 }}>
-          {_(ctx.lang,
-            'Sorry, oscar is not in the sudoers file. This incident will be reported. 😏',
-            'Lo siento, oscar no está en sudoers. Este incidente será reportado. 😏')}
+    run: (args, ctx) => {
+      const cmd = args.join(' ').trim().toLowerCase();
+      // XKCD #149 — the classic
+      if (cmd === 'make me a sandwich') {
+        return <div className="c-yellow" style={{ fontSize: 20 }}>🥪 Okay.</div>;
+      }
+      // Hire / pay variants
+      if (cmd === 'hire oscar' || cmd === 'pay oscar') {
+        return (
+          <div>
+            <div className="c-green">✓ Sudo accepted. Excellent decision.</div>
+            <div className="c-dim" style={{ marginTop: 4 }}>
+              Now run <span className="c-accent">compose</span> to actually reach him.
+            </div>
+          </div>
+        );
+      }
+      // rm -rf joke
+      if (cmd.includes('rm -rf')) {
+        return (
+          <div className="c-pink">
+            sudo: refusing to recursively delete the universe.
+          </div>
+        );
+      }
+      return (
+        <div>
+          <div className="c-pink">[sudo] password for oscar:</div>
+          <div className="c-dim" style={{ marginTop: 4 }}>
+            {_(ctx.lang,
+              'Sorry, oscar is not in the sudoers file. This incident will be reported. 😏',
+              'Lo siento, oscar no está en sudoers. Este incidente será reportado. 😏')}
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   'rm': {
     name: 'rm',
@@ -959,6 +985,828 @@ const COMMANDS: Record<string, Command> = {
     },
   },
 
+  // ==================================================================
+  // LINUX-FEEL HIDDEN COMMANDS
+  // None of these appear in help or tab autocomplete — they reward
+  // visitors who type real shell commands and wonder if this is real.
+  // ==================================================================
+
+  uptime: {
+    name: 'uptime',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (_args, _ctx) => {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-US', { hour12: false });
+      const years = 20 + (now.getFullYear() - 2026);
+      return (
+        <div>
+          <span className="c-fg">{time}  </span>
+          <span className="c-fg">up </span>
+          <span className="c-yellow">{years} years, 13 days</span>,
+          <span className="c-fg"> 1 user, load average: </span>
+          <span className="c-cyan">0.42, 0.31, 0.18</span>
+        </div>
+      );
+    },
+  },
+
+  id: {
+    name: 'id',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <div className="c-fg">
+        uid=1000(<span className="c-green">oscar</span>) gid=1000(oscar)
+        groups=1000(oscar),27(<span className="c-cyan">sudo</span>),
+        999(<span className="c-cyan">docker</span>),
+        200(<span className="c-cyan">builders</span>),
+        201(<span className="c-cyan">ai</span>),
+        202(<span className="c-cyan">fiscal-mx</span>),
+        203(<span className="c-cyan">fhir</span>)
+      </div>
+    ),
+  },
+
+  groups: {
+    name: 'groups',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => <div className="c-fg">oscar sudo docker builders ai fiscal-mx fhir founders</div>,
+  },
+
+  hostname: {
+    name: 'hostname',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => <div className="c-fg">iqsit</div>,
+  },
+
+  dnsdomainname: {
+    name: 'dnsdomainname',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => <div className="c-fg">iqsit.com</div>,
+  },
+
+  who: {
+    name: 'who',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`oscar    pts/0    2026-05-12 09:14 (iqsit.com)
+you      pts/1    ${new Date().toISOString().slice(0, 16).replace('T', ' ')} (visiting)`}
+      </pre>
+    ),
+  },
+
+  w: {
+    name: 'w',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{` ${new Date().toLocaleTimeString('en-US', { hour12: false })} up 20 years, 13 days,  2 users,  load average: 0.42, 0.31, 0.18
+USER     TTY      FROM             LOGIN@   IDLE   WHAT
+oscar    pts/0    iqsit.com        09:14    0.00s  building things
+you      pts/1    visiting         now      0.00s  exploring oscar.iqsit.com`}
+      </pre>
+    ),
+  },
+
+  users: {
+    name: 'users',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => <div className="c-fg">oscar you</div>,
+  },
+
+  last: {
+    name: 'last',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`oscar    pts/0    iqsit.com    Mon May 12 09:14   still logged in
+oscar    pts/0    iqsit.com    Sun May 11 08:32 - 23:50  (15:18)
+oscar    pts/0    iqsit.com    Sat May 10 09:01 - 22:14  (13:13)
+oscar    pts/0    iqsit.com    Fri May 09 08:48 - 23:11  (14:23)
+oscar    pts/0    iqsit.com    Thu May 08 09:30 - 22:55  (13:25)
+
+oscar has been logged in basically every day for 20+ years.
+wtmp begins at the beginning of time.`}
+      </pre>
+    ),
+  },
+
+  df: {
+    name: 'df',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Filesystem        Size   Used  Avail Use% Mounted on
+/dev/career        ∞      20y      ∞  N/A% /portfolio
+/dev/coffee        ∞      ∞       0    100% /life
+/dev/sleep         8h     5h      3h   62% /night
+tmpfs/focus        1.0M   1.0M     0   100% /now
+overlayfs/saas    32      32       0   100% /products`}
+      </pre>
+    ),
+  },
+
+  du: {
+    name: 'du',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`80+    ./repos
+32     ./curated-projects
+11     ./industries
+13     ./skill-categories
+1      ./brain
+∞      .`}
+      </pre>
+    ),
+  },
+
+  free: {
+    name: 'free',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`               total        used        free      shared  buff/cache   available
+Mem:           20y          20y           0           ∞         42M           ∞
+Swap:           0            0            0
+Coffee:         ∞            ∞            0           —          —             ∞`}
+      </pre>
+    ),
+  },
+
+  lscpu: {
+    name: 'lscpu',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Architecture:        x86_64 (Human, v1)
+CPU op-mode(s):      32-bit, 64-bit, async
+Byte Order:          Little Endian
+CPU(s):              1 (Oscar)
+Vendor ID:           OscarRamirezdeArellano
+Model name:          Full Stack Engineer @ 3.6 GHz
+Stepping:            20+ years
+Cache:               long-term memory: 20y · short-term: variable
+NUMA node(s):        1 (Veracruz, MX)
+Flags:               fhir hl7v2 sat cfdi fiel react nextjs fastapi
+                     postgres llm rag emr docker aws vercel
+                     polyglot remote opinionated coffee-fueled`}
+      </pre>
+    ),
+  },
+
+  env: {
+    name: 'env',
+    aliases: ['printenv'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`SHELL=/bin/zsh
+USER=oscar
+HOME=/home/oscar
+LANG=en_US.UTF-8 / es_MX.UTF-8
+TZ=America/Mexico_City
+EDITOR=vim
+PWD=~/portfolio
+FOCUS=ai+vertical-saas+regulated-industries
+COFFEE_LEVEL=high
+AVAILABILITY=open-for-projects
+RESEND_API_KEY=<redacted, nice try>
+ANTHROPIC_API_KEY=<redacted, nice try>`}
+      </pre>
+    ),
+  },
+
+  which: {
+    name: 'which',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      if (!args[0]) return <div className="c-fg">usage: which command...</div>;
+      const cmd = args[0];
+      if (COMMANDS[cmd] || ALIASES[cmd]) {
+        return <div className="c-fg">/usr/local/bin/{cmd}</div>;
+      }
+      return <div className="c-pink">which: no {cmd} in (/usr/local/bin:/usr/bin:/bin)</div>;
+    },
+  },
+
+  whereis: {
+    name: 'whereis',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      if (!args[0]) return <div className="c-fg">usage: whereis [name...]</div>;
+      const cmd = args[0];
+      if (COMMANDS[cmd] || ALIASES[cmd]) {
+        return (
+          <div className="c-fg">
+            {cmd}: /usr/local/bin/{cmd} /usr/share/man/man1/{cmd}.1.gz
+          </div>
+        );
+      }
+      return <div className="c-fg">{cmd}:</div>;
+    },
+  },
+
+  // ---------- NETWORK FAKES ----------
+  ping: {
+    name: 'ping',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: async (args, ctx) => {
+      const host = args[0] ?? 'iqsit.com';
+      const safe = host.replace(/[^a-zA-Z0-9.\-_]/g, '').slice(0, 60);
+      const fakeIP = '172.67.' + (10 + Math.floor(Math.random() * 240)) + '.' + (10 + Math.floor(Math.random() * 240));
+      ctx.print(<div className="c-fg">PING {safe} ({fakeIP}) 56(84) bytes of data.</div>);
+      const seqs = 4;
+      const times: number[] = [];
+      for (let i = 1; i <= seqs; i++) {
+        await sleep(700 + Math.random() * 300);
+        const t = +(10 + Math.random() * 30).toFixed(1);
+        times.push(t);
+        ctx.print(
+          <div className="c-fg">
+            64 bytes from {safe} ({fakeIP}): icmp_seq={i} ttl=42 time={t} ms
+          </div>,
+        );
+      }
+      await sleep(400);
+      const min = Math.min(...times);
+      const max = Math.max(...times);
+      const avg = times.reduce((s, t) => s + t, 0) / times.length;
+      return (
+        <div>
+          <div className="c-fg">--- {safe} ping statistics ---</div>
+          <div className="c-fg">
+            {seqs} packets transmitted, {seqs} received, 0% packet loss, time {seqs * 1000}ms
+          </div>
+          <div className="c-fg">
+            rtt min/avg/max = {min.toFixed(1)}/{avg.toFixed(1)}/{max.toFixed(1)} ms
+          </div>
+        </div>
+      );
+    },
+  },
+
+  traceroute: {
+    name: 'traceroute',
+    aliases: ['tracert'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: async (args, ctx) => {
+      const host = args[0] ?? 'iqsit.com';
+      const safe = host.replace(/[^a-zA-Z0-9.\-_]/g, '').slice(0, 60);
+      ctx.print(<div className="c-fg">traceroute to {safe}, 30 hops max, 60 byte packets</div>);
+      const hops = [
+        'router.local',
+        'isp-gw.veracruz.mx',
+        'core-1.telmex.net',
+        'mx-laredo-edge.tier1.net',
+        'us-east-edge.cloudflare.com',
+        safe,
+      ];
+      for (let i = 0; i < hops.length; i++) {
+        await sleep(400 + Math.random() * 400);
+        const t1 = +(0.5 + Math.random() * 30 + i * 4).toFixed(3);
+        const t2 = +(0.5 + Math.random() * 30 + i * 4).toFixed(3);
+        const t3 = +(0.5 + Math.random() * 30 + i * 4).toFixed(3);
+        ctx.print(
+          <div className="c-fg">
+            <span className="c-dim">{String(i + 1).padStart(2)}  </span>
+            <span className="c-cyan">{hops[i].padEnd(40)}</span>
+            <span> {t1} ms  {t2} ms  {t3} ms</span>
+          </div>,
+        );
+      }
+      return null;
+    },
+  },
+
+  nslookup: {
+    name: 'nslookup',
+    aliases: ['dig'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const host = args[0] ?? 'iqsit.com';
+      const safe = host.replace(/[^a-zA-Z0-9.\-_]/g, '').slice(0, 60);
+      const fakeIP = '172.67.' + (10 + Math.floor(Math.random() * 240)) + '.' + (10 + Math.floor(Math.random() * 240));
+      return (
+        <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Server:         8.8.8.8
+Address:        8.8.8.8#53
+
+Non-authoritative answer:
+Name:           ${safe}
+Address:        ${fakeIP}
+Name:           ${safe}
+Address:        2606:4700:3033::6815:${Math.floor(Math.random() * 9999).toString(16)}`}
+        </pre>
+      );
+    },
+  },
+
+  ssh: {
+    name: 'ssh',
+    aliases: ['scp', 'sftp'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args, ctx) => {
+      const target = args[0] ?? 'oscar@iqsit.com';
+      return (
+        <div>
+          <div className="c-fg">{target}: Permission denied (publickey).</div>
+          <div className="c-dim" style={{ marginTop: 4, fontSize: 12.5 }}>
+            (try <span className="c-accent">compose</span> instead)
+          </div>
+        </div>
+      );
+    },
+  },
+
+  // ---------- GIT (CAREER METAPHOR) ----------
+  git: {
+    name: 'git',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const sub = args[0]?.toLowerCase();
+      switch (sub) {
+        case 'log':
+          return (
+            <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5, fontSize: 13 }}>
+{`commit 5e8fff5 (HEAD -> main, origin/main)
+Author: Oscar Ramírez de Arellano <oscar@iqsit.com>
+Date:   Mon May 12 09:00:00 2026 -0600
+
+    feat: launched oscar.iqsit.com interactive portfolio
+
+commit a8f4d12
+Author: Oscar Ramírez de Arellano <oscar@iqsit.com>
+Date:   Mon Jan 15 09:00:00 2024 -0600
+
+    feat: pivoted to AI integration & vertical SaaS
+
+commit 7b1c93a
+Author: Oscar Ramírez de Arellano <oscar@iqsit.com>
+Date:   Mon Jun 01 09:00:00 2022 -0600
+
+    feat: joined Developers.NET as Senior Full-Stack & DevOps
+
+commit c4d8e92
+Author: Oscar Ramírez de Arellano <oscar@iqsit.com>
+Date:   Mon Mar 15 09:00:00 2010 -0600
+
+    feat: leading dev at Rodall Oseguera — int'l trade systems
+
+commit 14a9b73 (root)
+Author: Oscar Ramírez de Arellano <oscar@iqsit.com>
+Date:   Mon Sep 01 09:00:00 2000 -0600
+
+    initial commit: started building things on the internet
+
+(end)`}
+            </pre>
+          );
+        case 'status':
+          return (
+            <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked plans:
+  (use "compose" to send Oscar a message)
+
+        ideas/next-vertical-saas.md
+        backlog/fiscal-platform-v2.md
+        backlog/healthcare-rag-improvements.md
+        wishlist/co-founder.md
+
+nothing added to commit but untracked plans present (working hard).`}
+            </pre>
+          );
+        case 'push':
+          return (
+            <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Enumerating objects: 20 years, done.
+Counting objects: 100% (32/32 projects), done.
+Delta compression using up to 4 cores
+Compressing objects: 100% (∞/∞), done.
+Writing objects: 100% (20+ years), 1.2 MiB | 12.0 MiB/s, done.
+Total experience pushed to production.
+
+To prod
+   * [new branch]      mvp -> shipped`}
+            </pre>
+          );
+        case 'commit':
+          return (
+            <div>
+              <div className="c-pink">error: cannot commit — that's Oscar's job.</div>
+              <div className="c-dim" style={{ marginTop: 4 }}>
+                You can <span className="c-accent">compose</span> a message instead.
+              </div>
+            </div>
+          );
+        case 'pull':
+        case 'fetch':
+          return (
+            <div>
+              <div className="c-fg">remote: Enumerating Oscar's experience...</div>
+              <div className="c-fg">remote: Counting projects: 32, done.</div>
+              <div className="c-green">Already up to date.</div>
+            </div>
+          );
+        default:
+          return (
+            <div className="c-fg">
+              usage: git [<span className="c-accent">log</span>|<span className="c-accent">status</span>|<span className="c-accent">push</span>|<span className="c-accent">pull</span>|<span className="c-accent">commit</span>]
+            </div>
+          );
+      }
+    },
+  },
+
+  // ---------- ASCII FUN ----------
+  sl: {
+    name: 'sl',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: async (_args, ctx) => {
+      // Steam locomotive: a classic joke when you typo 'ls' as 'sl'.
+      // We render an ASCII train that "passes" across the line.
+      const frames = [
+        '🚂                                       ',
+        '   🚂                                    ',
+        '      🚂                                 ',
+        '         🚂                              ',
+        '            🚂                           ',
+        '               🚂                        ',
+        '                  🚂                     ',
+        '                     🚂                  ',
+        '                        🚂               ',
+        '                           🚂            ',
+        '                              🚂         ',
+        '                                 🚂      ',
+        '                                    🚂   ',
+        '                                       🚂',
+      ];
+      for (const f of frames) {
+        ctx.print(<div className="c-yellow" style={{ fontSize: 18 }}>{f}</div>);
+        await sleep(80);
+      }
+      return <div className="c-dim">(did you mean <span className="c-accent">ls</span>?)</div>;
+    },
+  },
+
+  cowsay: {
+    name: 'cowsay',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const text = (args.join(' ').trim() || 'Moo!').slice(0, 200);
+      const width = text.length;
+      const top = ' ' + '_'.repeat(width + 2);
+      const bottom = ' ' + '-'.repeat(width + 2);
+      return (
+        <pre className="c-yellow" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.3, fontSize: 13 }}>
+{`${top}
+< ${text} >
+${bottom}
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`}
+        </pre>
+      );
+    },
+  },
+
+  fortune: {
+    name: 'fortune',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (_args, ctx) => {
+      const quotes = ctx.lang === 'en' ? [
+        '"Ship it, validate it, then make it pretty." — Oscar',
+        '"The best code is the code you didn\'t need to write."',
+        '"Build the thing. Ship the thing. Charge for the thing."',
+        '"You don\'t need a team. You need a system." — Oscar',
+        '"AI without a clear problem is just expensive autocomplete."',
+        '"Boring tech is a feature." — Oscar',
+        '"Premature abstraction is the root of most evil." — slightly paraphrased',
+        '"The terminal is undefeated."',
+        '"If you can\'t explain it to a contador, you don\'t understand it yourself."',
+        '"Done is better than perfect. Shipped is better than done."',
+      ] : [
+        '"Lanza, valida, después embelleces." — Oscar',
+        '"El mejor código es el que no necesitaste escribir."',
+        '"Construye la cosa. Lánzala. Cobra por ella."',
+        '"No necesitas equipo. Necesitas un sistema." — Oscar',
+        '"IA sin problema claro es solo autocompletado caro."',
+        '"La tecnología aburrida es una feature." — Oscar',
+        '"La abstracción prematura es la raíz de todo mal."',
+        '"El terminal nunca pierde."',
+        '"Si no se lo puedes explicar a un contador, no lo entiendes tú."',
+        '"Hecho es mejor que perfecto. Enviado es mejor que hecho."',
+      ];
+      return <div className="c-yellow">{quotes[Math.floor(Math.random() * quotes.length)]}</div>;
+    },
+  },
+
+  // ---------- PACKAGE MANAGER JOKES ----------
+  apt: {
+    name: 'apt',
+    aliases: ['apt-get', 'yum', 'dnf', 'pacman', 'brew'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args, ctx) => {
+      const sub = args[0]?.toLowerCase();
+      if (sub === 'install' || sub === '-S' || sub === '-Sy') {
+        const pkg = args[1] ?? 'oscar';
+        return (
+          <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+
+E: Unable to locate package ${pkg}
+
+Hint: try `}<span className="c-accent">compose</span>{` to install Oscar into your project.`}
+          </pre>
+        );
+      }
+      if (sub === 'update' || sub === 'upgrade') {
+        return (
+          <div>
+            <div className="c-fg">Reading package lists... Done</div>
+            <div className="c-green">All packages are up to date. Oscar is also up to date.</div>
+          </div>
+        );
+      }
+      if (sub === 'search') {
+        return (
+          <div>
+            <div className="c-cyan">oscar/stable amd64</div>
+            <div className="c-dim">  Full Stack Engineer · AI Integration · 20+ years</div>
+            <div className="c-cyan">oscar-devops/stable amd64</div>
+            <div className="c-dim">  Production deploy + maintenance · solo or team</div>
+          </div>
+        );
+      }
+      return (
+        <div className="c-fg">
+          usage: apt [<span className="c-accent">install</span>|<span className="c-accent">search</span>|<span className="c-accent">update</span>|<span className="c-accent">upgrade</span>] [pkg]
+        </div>
+      );
+    },
+  },
+
+  npm: {
+    name: 'npm',
+    aliases: ['pnpm', 'yarn', 'bun'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const sub = args[0]?.toLowerCase();
+      if (sub === 'install' || sub === 'i' || sub === 'add') {
+        const pkg = args[1] ?? 'something';
+        return (
+          <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`npm warn deprecated ${pkg}@1.0.0: just hire oscar instead
+npm err! Could not resolve dependency: ${pkg}
+npm err!
+npm err! See npm-debug.log for details, or try 'compose'.`}
+          </pre>
+        );
+      }
+      if (sub === 'run' && args[1] === 'dev') {
+        return (
+          <div>
+            <div className="c-cyan">▲ Next.js 16.2.6 (Turbopack)</div>
+            <div className="c-fg">- Local:   <a href="https://oscar.iqsit.com">https://oscar.iqsit.com</a></div>
+            <div className="c-green">✓ Ready in 0ms (you're already here)</div>
+          </div>
+        );
+      }
+      return (
+        <div className="c-fg">
+          usage: npm [<span className="c-accent">install</span>|<span className="c-accent">run</span>] [pkg]
+        </div>
+      );
+    },
+  },
+
+  pip: {
+    name: 'pip',
+    aliases: ['pip3'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const sub = args[0]?.toLowerCase();
+      if (sub === 'install') {
+        const pkg = args[1] ?? 'oscar';
+        return (
+          <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5 }}>
+{`Collecting ${pkg}
+ERROR: Could not find a version that satisfies the requirement ${pkg}
+ERROR: No matching distribution found for ${pkg}
+
+Suggestion: `}<span className="c-accent">compose</span>{` works just as well.`}
+          </pre>
+        );
+      }
+      return <div className="c-fg">usage: pip install [pkg]</div>;
+    },
+  },
+
+  // ---------- PROCESS JOKES ----------
+  kill: {
+    name: 'kill',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const target = args.filter((a) => !a.startsWith('-')).join(' ');
+      if (target === 'self' || args.includes('-9')) {
+        return (
+          <div>
+            <div className="c-pink">kill: cannot kill what's not alive.</div>
+            <div className="c-dim" style={{ marginTop: 4, fontSize: 12.5 }}>
+              (everything you see here is just text, friend.)
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div className="c-pink">
+          kill: ({target || '?'}): No such process. Try <span className="c-accent">compose</span>.
+        </div>
+      );
+    },
+  },
+
+  // ---------- FILESYSTEM WRITE JOKES ----------
+  mkdir: {
+    name: 'mkdir',
+    aliases: ['touch', 'mv', 'cp', 'chmod', 'chown', 'ln'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <div className="c-pink">
+        read-only filesystem (this is a portfolio, not your shell)
+      </div>
+    ),
+  },
+
+  // ---------- MISC LINUX ----------
+  cal: {
+    name: 'cal',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => {
+      const now = new Date();
+      const month = now.toLocaleString('en-US', { month: 'long' });
+      const year = now.getFullYear();
+      const firstDay = new Date(year, now.getMonth(), 1).getDay();
+      const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+      const today = now.getDate();
+      const rows: string[] = [];
+      let row = '  '.repeat(firstDay);
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dStr = d === today ? `[7m${String(d).padStart(2)}[0m` : String(d).padStart(2);
+        row += dStr + ' ';
+        if ((firstDay + d) % 7 === 0) {
+          rows.push(row.trimEnd());
+          row = '';
+        }
+      }
+      if (row) rows.push(row.trimEnd());
+      const header = `      ${month} ${year}`;
+      const days = 'Su Mo Tu We Th Fr Sa';
+      return (
+        <pre className="c-fg" style={{ whiteSpace: 'pre', margin: 0, lineHeight: 1.5, fontSize: 13 }}>
+{`${header}
+${days}
+${rows.map((r) => r.replace(/\[7m/g, '').replace(/\[0m/g, '')).join('\n')}`}
+        </pre>
+      );
+    },
+  },
+
+  seq: {
+    name: 'seq',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const n = Math.min(Math.max(parseInt(args[0] ?? '10', 10) || 10, 1), 50);
+      return <pre className="c-fg" style={{ margin: 0 }}>{Array.from({ length: n }, (_, i) => i + 1).join('\n')}</pre>;
+    },
+  },
+
+  yes: {
+    name: 'yes',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const word = (args.join(' ') || 'y').slice(0, 30);
+      const out = Array(15).fill(word).join('\n');
+      return (
+        <div>
+          <pre className="c-fg" style={{ margin: 0 }}>{out}</pre>
+          <div className="c-dim" style={{ marginTop: 4, fontSize: 12.5 }}>
+            (truncated — would loop forever in a real shell)
+          </div>
+        </div>
+      );
+    },
+  },
+
+  // ---------- POP CULTURE / JOKES ----------
+  '42': {
+    name: '42',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: () => (
+      <div className="c-yellow">
+        The Answer to the Ultimate Question of Life, the Universe, and Everything.
+      </div>
+    ),
+  },
+
+  hello: {
+    name: 'hello',
+    aliases: ['hi', 'hola', 'hey'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (_args, ctx) => (
+      <div>
+        <span className="c-green">Hello!</span> {_(ctx.lang, "Try", "Prueba")}{' '}
+        <span className="c-accent">help</span> {_(ctx.lang, 'to see what you can do here.', 'para ver qué puedes hacer aquí.')}
+      </div>
+    ),
+  },
+
+  make: {
+    name: 'make',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const target = args.join(' ').trim();
+      if (target === 'me a sandwich') {
+        return (
+          <div>
+            <div className="c-pink">make: *** No rule to make target 'me'.  Stop.</div>
+            <div className="c-dim" style={{ marginTop: 4, fontSize: 12.5 }}>
+              (try with sudo, XKCD #149)
+            </div>
+          </div>
+        );
+      }
+      if (target === 'money' || target === 'love') {
+        return <div className="c-pink">make: *** No rule to make target '{target}'.  Stop.</div>;
+      }
+      return <div className="c-fg">make: Nothing to be done for '{target || 'all'}'.</div>;
+    },
+  },
+
+  rev: {
+    name: 'rev',
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args) => {
+      const text = args.join(' ');
+      return <div className="c-fg">{text.split('').reverse().join('')}</div>;
+    },
+  },
+
+  // Linux 'banner' style — alias for figlet (already exists)
+  banner: {
+    name: 'banner',
+    aliases: ['toilet'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: (args, ctx) => {
+      // delegate to figlet
+      return COMMANDS.figlet.run(args, ctx);
+    },
+  },
+
   // ---------- CHANGELOG ----------
   changelog: {
     name: 'changelog',
@@ -1029,6 +1877,101 @@ export function getCommandNames(): string[] {
     ...Object.keys(COMMANDS).filter((n) => !COMMANDS[n].hidden),
     ...Object.keys(ALIASES),
   ].sort();
+}
+
+// === Tab autocomplete ===
+export type CompletionResult = { matches: string[]; prefix: string };
+
+/**
+ * Context-aware tab completion.
+ * Returns the list of possible completions for the current input, plus the
+ * "prefix" of the input that does NOT get replaced (everything before the
+ * token being completed).
+ */
+export function getCompletions(input: string, cwd: string): CompletionResult {
+  const endsWithSpace = input.endsWith(' ');
+  const trimmed = input.trim();
+  const tokens = trimmed.length === 0 ? [] : trimmed.split(/\s+/);
+
+  // Empty input → all commands
+  if (tokens.length === 0) {
+    return { matches: getCommandNames(), prefix: '' };
+  }
+
+  // Still typing the first token (the command) — complete command names
+  if (tokens.length === 1 && !endsWithSpace) {
+    return {
+      matches: getCommandNames().filter((n) => n.startsWith(tokens[0])),
+      prefix: '',
+    };
+  }
+
+  // Completing an argument
+  const resolvedCmd = (ALIASES[tokens[0].toLowerCase()] ?? tokens[0]).toLowerCase();
+  const partial = endsWithSpace ? '' : tokens[tokens.length - 1];
+  const prefix = endsWithSpace ? input : tokens.slice(0, -1).join(' ') + ' ';
+
+  return { matches: completeArg(resolvedCmd, partial, cwd), prefix };
+}
+
+function completeArg(cmd: string, partial: string, cwd: string): string[] {
+  switch (cmd) {
+    case 'cat':
+    case 'ls':
+    case 'dir':
+      return completeFsPath(partial, cwd, /* dirsOnly */ false);
+    case 'cd':
+      return completeFsPath(partial, cwd, /* dirsOnly */ true);
+    case 'theme':
+      return ['tokyo-night', 'dracula', 'matrix', 'gruvbox', 'cyberpunk'].filter((t) =>
+        t.startsWith(partial),
+      );
+    case 'lang':
+    case 'language':
+    case 'idioma':
+      return ['en', 'es'].filter((t) => t.startsWith(partial));
+    case 'cv':
+    case 'resume':
+    case 'curriculum':
+      return ['en', 'es', '--1page'].filter((t) => t.startsWith(partial));
+    case 'audio':
+      return ['on', 'off'].filter((t) => t.startsWith(partial));
+    case 'man':
+      return getCommandNames().filter((n) => n.startsWith(partial));
+    case 'vim':
+    case 'nano':
+    case 'emacs':
+    case 'vi':
+      return completeFsPath(partial, cwd, false);
+    default:
+      return [];
+  }
+}
+
+function completeFsPath(partial: string, cwd: string, dirsOnly: boolean): string[] {
+  // Split into "dir part" (preserved in output) and "name part" (to match against)
+  let dirPath: string;
+  let namePart: string;
+  if (partial.includes('/')) {
+    const idx = partial.lastIndexOf('/');
+    dirPath = partial.slice(0, idx + 1); // includes trailing slash
+    namePart = partial.slice(idx + 1);
+  } else {
+    dirPath = '';
+    namePart = partial;
+  }
+
+  // Resolve directory
+  const targetForResolve = dirPath ? dirPath.replace(/\/$/, '') : undefined;
+  // resolvePath treats empty string as "~", we want "current dir" → pass undefined
+  const resolved = resolvePath(cwd, targetForResolve || undefined);
+  if (!resolved || resolved.node.type !== 'dir') return [];
+
+  const children = listChildren(resolved.node);
+  return children
+    .filter((c) => !dirsOnly || c.type === 'dir')
+    .filter((c) => c.name.startsWith(namePart))
+    .map((c) => dirPath + c.name + (c.type === 'dir' ? '/' : ''));
 }
 
 // === View helpers ===
