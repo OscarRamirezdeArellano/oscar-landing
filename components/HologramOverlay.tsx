@@ -6,22 +6,33 @@ import { runCommand } from '@/lib/commands';
 import type { CommandContext, Lang, Theme } from '@/lib/types';
 
 /**
- * `hologram` — orbital terminal floating in space.
+ * `hologram` v2 — orbital terminal with floating holographic panels.
  *
- * The user types real commands, but the responses materialize as holographic
- * panels floating in front of a Tron-style WebGL grid scene. The whole
- * content tilts with the mouse for a subtle parallax / "you're really in 3D"
- * effect. Panels stack vertically and scroll.
- *
- * Most regular commands work — overlay-opening commands (vim, matrix, void,
- * hack, contact-form, chat, hologram) print a friendly "exit hologram first"
- * message instead of stacking overlays.
+ * Inspired by Star Wars / Cyberpunk 2077 holographic UIs.
+ * - Real input bar at the bottom (the "keyboard" you type into)
+ * - Each command response materializes as a holographic PANEL floating
+ *   in 3D space around the input
+ * - Panels are arranged in a radial fan: newest in front-center, older
+ *   ones tilted to the sides and pushed back into depth
+ * - Each panel has a close button and internal scroll for long output
+ * - Mouse parallax tilts the whole stage
  */
 
-type PanelKind = 'system' | 'prompt' | 'output' | 'error';
-type Panel = { id: number; kind: PanelKind; content: React.ReactNode };
+type Panel = { id: number; kind: 'system' | 'prompt' | 'output' | 'error'; content: React.ReactNode };
 
 const SUGGESTIONS = ['whoami', 'about', 'services', 'projects', 'skills', 'cv en', 'compose', 'help'];
+
+/** Slot positions for each panel index (0 = newest). 6 visible at most. */
+const SLOTS: { x: number; y: number; z: number; rotY: number; rotX: number; scale: number; opacity: number }[] = [
+  { x:   0, y:    0, z:  120, rotY:   0, rotX:  0, scale: 1.00, opacity: 1.00 }, // 0 — front-center
+  { x: 360, y:  -40, z:  -20, rotY: -22, rotX:  0, scale: 0.92, opacity: 0.95 }, // 1 — right-mid
+  { x: -360, y: -40, z:  -20, rotY:  22, rotX:  0, scale: 0.92, opacity: 0.95 }, // 2 — left-mid
+  { x: 240, y: -200, z: -180, rotY: -28, rotX: 4, scale: 0.78, opacity: 0.7  }, // 3 — far right
+  { x: -240, y: -200, z: -180, rotY:  28, rotX: 4, scale: 0.78, opacity: 0.7  }, // 4 — far left
+  { x:   0, y: -300, z: -300, rotY:   0, rotX: 8, scale: 0.7,  opacity: 0.55 }, // 5 — far back-up
+];
+
+const MAX_PANELS = SLOTS.length;
 
 export default function HologramOverlay({
   lang,
@@ -33,7 +44,6 @@ export default function HologramOverlay({
   onExit: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelIdRef = useRef(0);
   const tiltRef = useRef({ x: 0, y: 0 });
@@ -43,13 +53,23 @@ export default function HologramOverlay({
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
   const langRef = useRef<Lang>(lang);
   langRef.current = lang;
   const themeRef = useRef<Theme>(theme);
   themeRef.current = theme;
 
-  const pushPanel = (kind: PanelKind, content: React.ReactNode) => {
-    setPanels((prev) => [...prev, { id: ++panelIdRef.current, kind, content }]);
+  /** Add a panel to the front (newest), capping at MAX_PANELS. */
+  const pushPanel = (kind: Panel['kind'], content: React.ReactNode) => {
+    setPanels((prev) => {
+      const next: Panel[] = [{ id: ++panelIdRef.current, kind, content }, ...prev];
+      return next.slice(0, MAX_PANELS);
+    });
+  };
+
+  /** Close a panel by id (rest stay in their relative order). */
+  const closePanel = (id: number) => {
+    setPanels((prev) => prev.filter((p) => p.id !== id));
   };
 
   const resetToWelcome = () => {
@@ -68,7 +88,6 @@ export default function HologramOverlay({
     const cmd = raw.trim();
     if (!cmd || busy) return;
 
-    // Echo as a prompt panel
     pushPanel(
       'prompt',
       <div className="hg-prompt-line">
@@ -76,7 +95,6 @@ export default function HologramOverlay({
       </div>,
     );
 
-    // Local commands that override the global registry
     if (cmd === 'clear' || cmd === 'cls') {
       resetToWelcome();
       return;
@@ -86,7 +104,6 @@ export default function HologramOverlay({
       return;
     }
 
-    // Build a minimal CommandContext for the global runner
     let overlayBlocked = false;
     const ctx: CommandContext = {
       lang: langRef.current,
@@ -108,7 +125,7 @@ export default function HologramOverlay({
             'error',
             <div className="hg-error">
               {langRef.current === 'en'
-                ? `Can't open '${type}' from inside the hologram. Press ESC first, then run it.`
+                ? `Can't open '${type}' from inside the hologram. Press ESC to exit first, then run it.`
                 : `No puedes abrir '${type}' dentro del hologram. ESC primero, luego córrelo.`}
             </div>,
           );
@@ -139,12 +156,6 @@ export default function HologramOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // === Auto-scroll to latest panel ===
-  useEffect(() => {
-    const c = containerRef.current;
-    if (c) c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' });
-  }, [panels]);
-
   // === ESC handler (armed after 200ms) ===
   useEffect(() => {
     let armed = false;
@@ -165,8 +176,8 @@ export default function HologramOverlay({
   // === Mouse parallax ===
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 6;
-      const y = (e.clientY / window.innerHeight - 0.5) * 6;
+      const x = (e.clientX / window.innerWidth - 0.5) * 5;
+      const y = (e.clientY / window.innerHeight - 0.5) * 5;
       tiltRef.current = { x, y };
       setTilt({ x, y });
     };
@@ -174,7 +185,7 @@ export default function HologramOverlay({
     return () => window.removeEventListener('mousemove', handler);
   }, []);
 
-  // === Three.js background scene: grid floor + particles + fog ===
+  // === Three.js background scene ===
   useEffect(() => {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
@@ -197,21 +208,18 @@ export default function HologramOverlay({
       renderer.setSize(innerWidth, innerHeight);
       renderer.setClearColor(0x000814, 1);
 
-      // Tron-style grid floor
       const grid1 = new THREE.GridHelper(120, 60, 0x00d9ff, 0x003a4d);
       (grid1.material as THREE.Material).opacity = 0.55;
       (grid1.material as THREE.Material).transparent = true;
       grid1.position.y = -3;
       scene.add(grid1);
 
-      // Secondary larger grid for depth
       const grid2 = new THREE.GridHelper(300, 30, 0x00d9ff, 0x001a26);
       (grid2.material as THREE.Material).opacity = 0.25;
       (grid2.material as THREE.Material).transparent = true;
       grid2.position.y = -3.001;
       scene.add(grid2);
 
-      // Soft particles drifting
       const PCOUNT = 600;
       const positions = new Float32Array(PCOUNT * 3);
       for (let i = 0; i < PCOUNT; i++) {
@@ -232,15 +240,14 @@ export default function HologramOverlay({
       const points = new THREE.Points(pgeo, pmat);
       scene.add(points);
 
-      // Distant horizon glow plane
-      const glowGeo = new THREE.PlaneGeometry(150, 12);
-      const glowMat = new THREE.MeshBasicMaterial({
+      const horizonGeo = new THREE.PlaneGeometry(150, 12);
+      const horizonMat = new THREE.MeshBasicMaterial({
         color: 0x00d9ff,
         transparent: true,
         opacity: 0.04,
         depthWrite: false,
       });
-      const horizon = new THREE.Mesh(glowGeo, glowMat);
+      const horizon = new THREE.Mesh(horizonGeo, horizonMat);
       horizon.position.set(0, 0, -40);
       scene.add(horizon);
 
@@ -251,13 +258,11 @@ export default function HologramOverlay({
       };
       window.addEventListener('resize', onResize);
 
-      // Animate
       const start = performance.now();
       const animate = () => {
         if (cancelled) return;
         const t = (performance.now() - start) * 0.001;
 
-        // Drift particles slowly upward
         const arr = pgeo.attributes.position.array as Float32Array;
         for (let i = 0; i < PCOUNT; i++) {
           arr[i * 3 + 1] += 0.005;
@@ -265,14 +270,12 @@ export default function HologramOverlay({
         }
         pgeo.attributes.position.needsUpdate = true;
 
-        // Subtle camera sway driven by mouse parallax
         const tx = tiltRef.current.x * 0.05;
         const ty = tiltRef.current.y * 0.03;
         camera.position.x += (tx - camera.position.x) * 0.04;
         camera.position.y += (1.5 + ty - camera.position.y) * 0.04;
         camera.lookAt(0, -2 + ty * 0.5, 0);
 
-        // Slowly rotate floor for motion
         grid1.rotation.y = t * 0.02;
         grid2.rotation.y = -t * 0.01;
 
@@ -285,8 +288,8 @@ export default function HologramOverlay({
         window.removeEventListener('resize', onResize);
         pgeo.dispose();
         pmat.dispose();
-        glowGeo.dispose();
-        glowMat.dispose();
+        horizonGeo.dispose();
+        horizonMat.dispose();
         renderer.dispose();
       };
     })();
@@ -304,6 +307,16 @@ export default function HologramOverlay({
     await runHere(cmd);
   };
 
+  // Compute panel transform from index (0 = newest)
+  const panelStyle = (index: number): React.CSSProperties => {
+    const slot = SLOTS[index] ?? SLOTS[SLOTS.length - 1];
+    return {
+      transform: `translate3d(${slot.x}px, ${slot.y}px, ${slot.z}px) rotateY(${slot.rotY}deg) rotateX(${slot.rotX}deg) scale(${slot.scale})`,
+      opacity: slot.opacity,
+      zIndex: 100 - index,
+    };
+  };
+
   return (
     <div className="hologram-overlay">
       <canvas ref={canvasRef} />
@@ -311,32 +324,49 @@ export default function HologramOverlay({
 
       <div className="hologram-titlebar">
         <span className="hg-status-dot" />
-        ORBITAL TERMINAL · oscar.iqsit.com · session: holo-{Math.random().toString(36).slice(2, 6)}
-        <button className="hg-titlebar-exit" onClick={onExit} aria-label="exit">✕</button>
+        ORBITAL TERMINAL · oscar.iqsit.com · session: holo-{(panelIdRef.current * 7919).toString(36).slice(-4)}
+        <button className="hg-titlebar-exit" onClick={onExit} aria-label="exit">
+          ✕ ESC
+        </button>
       </div>
 
       <div
-        className="hologram-content"
-        ref={containerRef}
+        className="hologram-stage"
         style={{
-          transform: `perspective(1400px) rotateX(${-tilt.y * 0.4}deg) rotateY(${tilt.x * 0.4}deg)`,
+          transform: `rotateX(${-tilt.y * 0.4}deg) rotateY(${tilt.x * 0.4}deg)`,
         }}
       >
         {loading ? (
           <div className="hologram-loading">
-            <span className="c-accent">⠹</span> {lang === 'en' ? 'Materializing terminal' : 'Materializando terminal'}<span className="c-dim">...</span>
+            <span className="c-accent">⠹</span>{' '}
+            {lang === 'en' ? 'Materializing terminal' : 'Materializando terminal'}
+            <span className="c-dim">...</span>
           </div>
         ) : (
-          panels.map((p) => (
-            <div key={p.id} className={`hologram-panel hg-${p.kind}`}>
-              <div className="hg-scanlines" />
-              <div className="hg-glow-corner hg-tl" />
-              <div className="hg-glow-corner hg-tr" />
-              <div className="hg-glow-corner hg-bl" />
-              <div className="hg-glow-corner hg-br" />
-              <div className="hg-panel-content">{p.content}</div>
-            </div>
-          ))
+          <div className="hologram-panels">
+            {panels.map((p, i) => (
+              <div
+                key={p.id}
+                className={`hologram-panel hg-${p.kind}`}
+                style={panelStyle(i)}
+              >
+                <div className="hg-scanlines" />
+                <div className="hg-glow-corner hg-tl" />
+                <div className="hg-glow-corner hg-tr" />
+                <div className="hg-glow-corner hg-bl" />
+                <div className="hg-glow-corner hg-br" />
+                <button
+                  className="hg-panel-close"
+                  onClick={() => closePanel(p.id)}
+                  aria-label="close panel"
+                  title={lang === 'en' ? 'Close panel' : 'Cerrar panel'}
+                >
+                  ✕
+                </button>
+                <div className="hg-panel-content">{p.content}</div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
@@ -348,14 +378,18 @@ export default function HologramOverlay({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={lang === 'en' ? 'type a command — try: whoami, services, projects, compose' : 'teclea un comando — prueba: whoami, services, projects, compose'}
+          placeholder={
+            lang === 'en'
+              ? 'type a command — try: whoami, services, projects, compose'
+              : 'teclea un comando — prueba: whoami, services, projects, compose'
+          }
           disabled={busy || loading}
           autoComplete="off"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
         />
-        <span className="hg-input-hint">ESC {lang === 'en' ? 'to exit' : 'para salir'}</span>
+        <span className="hg-input-hint">{lang === 'en' ? 'ESC to exit' : 'ESC para salir'}</span>
       </form>
     </div>
   );
@@ -370,16 +404,15 @@ function WelcomePanel({ lang, onSuggestion }: { lang: Lang; onSuggestion: (cmd: 
       <div className="hg-welcome-body">
         {lang === 'en' ? (
           <>
-            You are floating somewhere above the void, looking at a holographic
-            shell projected from the surface. Type any command — the response
-            will materialize as a hologram. Move your mouse to look around.
+            You are floating somewhere above the void. The keyboard at the bottom is real —
+            type any command and the response materializes as a holographic panel around you.
+            Move your mouse to look around.
           </>
         ) : (
           <>
-            Estás flotando en algún lugar sobre el void, viendo una shell
-            holográfica proyectada desde la superficie. Teclea cualquier
-            comando — la respuesta se materializará como holograma. Mueve el
-            mouse para mirar alrededor.
+            Estás flotando sobre el void. El teclado de abajo es real — teclea cualquier
+            comando y la respuesta se materializa como panel holográfico a tu alrededor.
+            Mueve el mouse para mirar alrededor.
           </>
         )}
       </div>
@@ -392,6 +425,14 @@ function WelcomePanel({ lang, onSuggestion }: { lang: Lang; onSuggestion: (cmd: 
             {cmd}
           </button>
         ))}
+      </div>
+      <div className="hg-welcome-footer">
+        {lang === 'en' ? '▸ ' : '▸ '}
+        <span className="c-dim">
+          {lang === 'en'
+            ? 'Up to 6 panels float around you · close any with the ✕ · oldest fade as new ones spawn'
+            : 'Hasta 6 paneles flotan a tu alrededor · cierra cualquiera con ✕ · los viejos se desvanecen'}
+        </span>
       </div>
     </div>
   );

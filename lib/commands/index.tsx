@@ -241,6 +241,15 @@ const COMMANDS: Record<string, Command> = {
       return null;
     },
   },
+  tetris: {
+    name: 'tetris',
+    aliases: ['game'],
+    description: { en: 'play tetris', es: 'juega tetris' },
+    run: (_args, ctx) => {
+      ctx.setOverlay('tetris');
+      return null;
+    },
+  },
   neofetch: {
     name: 'neofetch',
     description: { en: 'cool profile card', es: 'tarjeta de perfil' },

@@ -82,6 +82,7 @@ const SECTIONS: { title: { en: string; es: string }; cmds: CmdEntry[] }[] = [
       { cmd: 'hack',     en: '☢ fake hack',      es: '☢ hack falso' },
       { cmd: 'void',     en: '☢ enter the void',     es: '☢ entrar al void' },
       { cmd: 'hologram', en: '☢ orbital terminal',   es: '☢ terminal orbital' },
+      { cmd: 'tetris',   en: '🎮 play tetris',        es: '🎮 juega tetris' },
       { cmd: 'sudo',     en: '☢ try it',          es: '☢ pruébalo' },
     ],
   },

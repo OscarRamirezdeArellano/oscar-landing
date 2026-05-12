@@ -60,7 +60,7 @@ export type CommandContext = {
   print: (node: React.ReactNode) => void;
   history: string[];
   runCommand: (cmd: string) => Promise<void>;
-  setOverlay: (overlay: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void' | 'hologram' | null, payload?: unknown) => void;
+  setOverlay: (overlay: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void' | 'hologram' | 'tetris' | null, payload?: unknown) => void;
   audioOn: boolean;
   setAudioOn: (on: boolean) => void;
 };

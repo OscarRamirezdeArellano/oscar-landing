@@ -1002,6 +1002,241 @@ a:hover {
 }
 
 /* ============================================
+   TETRIS OVERLAY
+   ============================================ */
+.tetris-overlay {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 30%, #1a0a2e 0%, #06010f 70%);
+  z-index: 1000;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+.tetris-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+}
+.tetris-logo {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, #00d9ff, #bb9af7, #f7768e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.tetris-subtitle {
+  font-size: 11px;
+  color: #565f89;
+  letter-spacing: 1px;
+}
+.tetris-exit-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tetris-exit-btn:hover {
+  background: rgba(255, 100, 100, 0.2);
+  border-color: rgba(255, 100, 100, 0.6);
+  color: #ffffff;
+}
+
+.tetris-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+  overflow: auto;
+}
+@media (max-width: 700px) {
+  .tetris-stage {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+.tetris-board-wrap {
+  position: relative;
+}
+.tetris-board {
+  display: grid;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(0, 217, 255, 0.5);
+  border-radius: 4px;
+  padding: 4px;
+  gap: 1px;
+  width: min(50vh, 320px);
+  aspect-ratio: 10 / 20;
+  box-shadow:
+    0 0 0 1px rgba(0, 217, 255, 0.1),
+    0 0 32px rgba(0, 217, 255, 0.25),
+    inset 0 0 24px rgba(0, 0, 0, 0.5);
+}
+.tetris-cell {
+  background: transparent;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+.tetris-cell.filled {
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25);
+}
+.tetris-cell.ghost {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.tetris-overlay-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 16px;
+}
+.tetris-msg-big {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #f7768e;
+  text-shadow: 0 0 16px rgba(247, 118, 142, 0.6);
+}
+.tetris-msg-stats {
+  font-size: 14px;
+  color: #c0caf5;
+}
+.tetris-msg-hint {
+  font-size: 12px;
+  color: #565f89;
+}
+.tetris-restart-btn {
+  margin-top: 14px;
+  background: rgba(0, 217, 255, 0.15);
+  border: 1px solid rgba(0, 217, 255, 0.6);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+.tetris-restart-btn:hover {
+  background: rgba(0, 217, 255, 0.3);
+  border-color: #00d9ff;
+  transform: translateY(-1px);
+}
+
+.tetris-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 200px;
+}
+@media (max-width: 700px) {
+  .tetris-sidebar { width: min(50vh, 320px); flex-direction: row; flex-wrap: wrap; }
+  .tetris-sidebar > * { flex: 1; min-width: 90px; }
+}
+.tetris-sidebar-row {
+  display: flex;
+  gap: 14px;
+}
+.tetris-sidebar-section {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 10px 14px;
+  flex: 1;
+}
+.tetris-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #565f89;
+  margin-bottom: 4px;
+}
+.tetris-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+.tetris-value-big {
+  font-size: 26px;
+  color: #00d9ff;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+.tetris-next {
+  display: grid;
+  gap: 2px;
+  width: 80px;
+  margin: 0 auto;
+}
+.tetris-next-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 2px;
+}
+.tetris-next-cell.filled {
+  box-shadow:
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25);
+}
+.tetris-controls {
+  font-size: 11px;
+}
+.tetris-control-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  color: #c0caf5;
+}
+.tetris-control-row kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 10px;
+  color: #00d9ff;
+  min-width: 14px;
+  text-align: center;
+}
+.tetris-control-row span {
+  color: #565f89;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* ============================================
    HOLOGRAM OVERLAY (orbital terminal)
    ============================================ */
 .hologram-overlay {
@@ -1070,51 +1305,71 @@ a:hover {
   color: #ffffff;
 }
 
-.hologram-content {
+.hologram-stage {
   position: relative;
   z-index: 2;
   height: calc(100vh - 48px - 64px); /* minus titlebar + input bar */
-  overflow-y: auto;
-  padding: 30px 5vw 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  perspective: 1800px;
+  perspective-origin: 50% 70%;
   transform-style: preserve-3d;
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
 }
-.hologram-content::-webkit-scrollbar {
-  width: 6px;
-}
-.hologram-content::-webkit-scrollbar-thumb {
-  background: rgba(0, 217, 255, 0.2);
-  border-radius: 3px;
+
+.hologram-panels {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
 }
 
 .hologram-loading {
-  text-align: center;
-  padding: 40px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: rgba(0, 217, 255, 0.85);
   font-size: 14px;
 }
 
-/* Hologram panels — the floating output cards */
+/* Hologram panels — float in 3D space, positioned via transform per-slot */
 .hologram-panel {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  width: 460px;
+  max-width: calc(100vw - 60px);
+  margin-left: -230px; /* center horizontally */
   background:
-    linear-gradient(180deg, rgba(0, 217, 255, 0.06) 0%, rgba(0, 217, 255, 0.02) 100%);
-  border: 1px solid rgba(0, 217, 255, 0.35);
+    linear-gradient(180deg, rgba(0, 217, 255, 0.08) 0%, rgba(0, 217, 255, 0.025) 100%);
+  border: 1px solid rgba(0, 217, 255, 0.4);
   border-radius: 4px;
-  padding: 14px 18px;
-  max-width: 720px;
-  margin: 0 auto;
-  width: 100%;
+  padding: 14px 36px 14px 18px; /* extra right pad for close btn */
   box-shadow:
-    0 0 0 1px rgba(0, 217, 255, 0.05),
-    0 0 24px rgba(0, 217, 255, 0.18),
-    inset 0 0 22px rgba(0, 217, 255, 0.04);
-  backdrop-filter: blur(2px);
-  animation: hg-materialize 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
-  overflow: hidden;
+    0 0 0 1px rgba(0, 217, 255, 0.06),
+    0 0 32px rgba(0, 217, 255, 0.22),
+    inset 0 0 22px rgba(0, 217, 255, 0.05);
+  backdrop-filter: blur(3px);
+  animation: hg-materialize 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+  transform-origin: 50% 100%;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.45s ease-out;
+  max-height: 65vh;
+  overflow: hidden; /* outer hidden — inner scrolls */
+}
+.hologram-panel:hover {
+  border-color: rgba(0, 217, 255, 0.65);
+  box-shadow:
+    0 0 0 1px rgba(0, 217, 255, 0.1),
+    0 0 40px rgba(0, 217, 255, 0.32),
+    inset 0 0 22px rgba(0, 217, 255, 0.08);
+}
+@media (max-width: 700px) {
+  .hologram-panel {
+    width: calc(100vw - 24px);
+    margin-left: 0;
+    left: 12px;
+  }
 }
 .hologram-panel.hg-prompt {
   background: rgba(0, 217, 255, 0.08);
@@ -1176,11 +1431,48 @@ a:hover {
 .hg-glow-corner.hg-bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
 .hg-glow-corner.hg-br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
 
+.hg-panel-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  background: rgba(0, 217, 255, 0.1);
+  border: 1px solid rgba(0, 217, 255, 0.4);
+  color: rgba(0, 217, 255, 0.8);
+  font-family: inherit;
+  font-size: 11px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hg-panel-close:hover {
+  background: rgba(255, 100, 100, 0.2);
+  border-color: rgba(255, 100, 100, 0.6);
+  color: #ffffff;
+}
+
 .hg-panel-content {
   position: relative;
   z-index: 1;
   font-size: 13.5px;
   line-height: 1.55;
+  max-height: calc(65vh - 32px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+}
+.hg-panel-content::-webkit-scrollbar { width: 5px; }
+.hg-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.3);
+  border-radius: 3px;
+}
+.hg-panel-content::-webkit-scrollbar-track {
+  background: rgba(0, 217, 255, 0.05);
 }
 .hg-panel-content strong { color: #ffffff; }
 .hg-panel-content a {
