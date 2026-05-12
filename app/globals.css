@@ -1002,6 +1002,289 @@ a:hover {
 }
 
 /* ============================================
+   HOLOGRAM OVERLAY (orbital terminal)
+   ============================================ */
+.hologram-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000814;
+  z-index: 1000;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  color: #c8e8ff;
+  overflow: hidden;
+}
+.hologram-overlay canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hologram-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.65) 100%),
+    repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,217,255,0.025) 2px, rgba(0,217,255,0.025) 3px);
+}
+
+.hologram-titlebar {
+  position: relative;
+  z-index: 2;
+  background: rgba(0, 8, 20, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.3);
+  font-size: 11.5px;
+  letter-spacing: 1px;
+  color: rgba(0, 217, 255, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hg-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 10px #00ff88;
+  animation: hg-pulse 1.5s infinite;
+}
+@keyframes hg-pulse { 50% { opacity: 0.4; } }
+.hg-titlebar-exit {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: rgba(0, 217, 255, 0.7);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.hg-titlebar-exit:hover {
+  background: rgba(0, 217, 255, 0.15);
+  border-color: #00d9ff;
+  color: #ffffff;
+}
+
+.hologram-content {
+  position: relative;
+  z-index: 2;
+  height: calc(100vh - 48px - 64px); /* minus titlebar + input bar */
+  overflow-y: auto;
+  padding: 30px 5vw 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform-style: preserve-3d;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hologram-content::-webkit-scrollbar {
+  width: 6px;
+}
+.hologram-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 217, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hologram-loading {
+  text-align: center;
+  padding: 40px;
+  color: rgba(0, 217, 255, 0.85);
+  font-size: 14px;
+}
+
+/* Hologram panels — the floating output cards */
+.hologram-panel {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(0, 217, 255, 0.06) 0%, rgba(0, 217, 255, 0.02) 100%);
+  border: 1px solid rgba(0, 217, 255, 0.35);
+  border-radius: 4px;
+  padding: 14px 18px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  box-shadow:
+    0 0 0 1px rgba(0, 217, 255, 0.05),
+    0 0 24px rgba(0, 217, 255, 0.18),
+    inset 0 0 22px rgba(0, 217, 255, 0.04);
+  backdrop-filter: blur(2px);
+  animation: hg-materialize 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
+}
+.hologram-panel.hg-prompt {
+  background: rgba(0, 217, 255, 0.08);
+  border-color: rgba(0, 217, 255, 0.5);
+  font-weight: 600;
+}
+.hologram-panel.hg-error {
+  background: linear-gradient(180deg, rgba(255, 100, 100, 0.06) 0%, rgba(255, 100, 100, 0.02) 100%);
+  border-color: rgba(255, 100, 100, 0.4);
+  box-shadow: 0 0 24px rgba(255, 100, 100, 0.2);
+}
+.hologram-panel.hg-system {
+  border-color: rgba(255, 200, 100, 0.4);
+  box-shadow: 0 0 24px rgba(255, 200, 100, 0.18);
+}
+
+@keyframes hg-materialize {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+    filter: blur(4px);
+  }
+  60% {
+    opacity: 0.6;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Scanlines on each panel */
+.hg-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 217, 255, 0.04) 2px,
+    rgba(0, 217, 255, 0.04) 3px
+  );
+}
+
+/* Decorative corner brackets */
+.hg-glow-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: #00d9ff;
+  pointer-events: none;
+  opacity: 0.7;
+}
+.hg-glow-corner.hg-tl { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+.hg-glow-corner.hg-tr { top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }
+.hg-glow-corner.hg-bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
+.hg-glow-corner.hg-br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.hg-panel-content {
+  position: relative;
+  z-index: 1;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+.hg-panel-content strong { color: #ffffff; }
+.hg-panel-content a {
+  color: #00d9ff;
+  border-bottom-color: #00d9ff;
+}
+.hg-prompt-line {
+  font-size: 14px;
+  color: #ffffff;
+}
+.hg-arrow { color: #00ff88; }
+.hg-cmd { color: #ffffff; font-weight: 600; }
+.hg-error { color: #ff8888; font-size: 13px; }
+
+/* Welcome panel inner */
+.hg-welcome-title {
+  color: #ffd66e;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.hg-welcome-body {
+  color: #c8e8ff;
+  font-size: 13.5px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.hg-welcome-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.hg-chip {
+  background: rgba(0, 217, 255, 0.12);
+  border: 1px solid rgba(0, 217, 255, 0.4);
+  color: #00d9ff;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.hg-chip:hover {
+  background: rgba(0, 217, 255, 0.25);
+  border-color: #00d9ff;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Bottom input bar */
+.hologram-input-bar {
+  position: relative;
+  z-index: 3;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 5vw;
+  background: rgba(0, 8, 20, 0.85);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 217, 255, 0.4);
+  box-shadow: 0 -8px 24px rgba(0, 217, 255, 0.08);
+}
+.hg-input-prompt {
+  color: #00ff88;
+  font-size: 18px;
+  text-shadow: 0 0 10px #00ff88;
+}
+.hologram-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 16px;
+  outline: none;
+  caret-color: #00d9ff;
+  caret-shape: block;
+  -webkit-caret-shape: block;
+  letter-spacing: 0.3px;
+}
+.hologram-input::placeholder {
+  color: rgba(0, 217, 255, 0.35);
+}
+.hologram-input:disabled {
+  opacity: 0.4;
+}
+.hg-input-hint {
+  color: rgba(0, 217, 255, 0.5);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .hologram-content { padding: 20px 12px; }
+  .hologram-input-bar { padding: 0 12px; }
+  .hg-input-hint { display: none; }
+  .hologram-titlebar { font-size: 10px; }
+}
+
+/* ============================================
    VOID OVERLAY (project star map)
    ============================================ */
 .void-overlay {

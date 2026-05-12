@@ -226,9 +226,18 @@ const COMMANDS: Record<string, Command> = {
   void: {
     name: 'void',
     aliases: ['glsl', 'webgl', 'space'],
-    description: { en: 'enter the void (WebGL)', es: 'entrar al void (WebGL)' },
+    description: { en: 'enter the void (WebGL star map)', es: 'entrar al void (mapa estelar WebGL)' },
     run: (_args, ctx) => {
       ctx.setOverlay('void');
+      return null;
+    },
+  },
+  hologram: {
+    name: 'hologram',
+    aliases: ['holo', 'orbital'],
+    description: { en: 'open the orbital terminal (holographic UI)', es: 'abrir el terminal orbital (UI holográfica)' },
+    run: (_args, ctx) => {
+      ctx.setOverlay('hologram');
       return null;
     },
   },

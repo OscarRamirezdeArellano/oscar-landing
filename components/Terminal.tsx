@@ -10,11 +10,12 @@ import HackOverlay from './HackOverlay';
 import ContactFormOverlay from './ContactFormOverlay';
 import ChatOverlay from './ChatOverlay';
 import VoidOverlay from './VoidOverlay';
+import HologramOverlay from './HologramOverlay';
 import Sidebar from './Sidebar';
 import { playKey, playEnter, initAudio, warmAudio } from '@/lib/audio';
 
 type Line = { id: number; node: React.ReactNode };
-type Overlay = { type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void'; payload?: unknown } | null;
+type Overlay = { type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void' | 'hologram'; payload?: unknown } | null;
 
 const ASCII = `
  ██████╗ ███████╗ ██████╗ █████╗ ██████╗     ██████╗  █████╗ ███╗   ███╗██╗██████╗ ███████╗███████╗
@@ -117,7 +118,7 @@ export default function Terminal() {
   }, []);
 
   const setOverlay = useCallback(
-    (type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void' | null, payload?: unknown) => {
+    (type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void' | 'hologram' | null, payload?: unknown) => {
       if (type === null) setOverlayState(null);
       else setOverlayState({ type, payload });
     },
@@ -375,6 +376,7 @@ export default function Terminal() {
       {overlay?.type === 'contact-form' && <ContactFormOverlay lang={lang} onExit={() => setOverlayState(null)} />}
       {overlay?.type === 'chat' && <ChatOverlay lang={lang} onExit={() => setOverlayState(null)} />}
       {overlay?.type === 'void' && <VoidOverlay lang={lang} onExit={() => setOverlayState(null)} />}
+      {overlay?.type === 'hologram' && <HologramOverlay lang={lang} theme={theme} onExit={() => setOverlayState(null)} />}
 
       <div className="shell">
         <div className="terminal-window">
