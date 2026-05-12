@@ -1805,6 +1805,58 @@ ${rows.map((r) => r.replace(/\[7m/g, '').replace(/\[0m/g, '')).join('\n')}`}
   },
 
   // Linux 'banner' style — alias for figlet (already exists)
+  // ---------- ANALYTICS (hidden, owner-only meta) ----------
+  logs: {
+    name: 'logs',
+    aliases: ['analytics', 'pageviews', 'visits'],
+    hidden: true,
+    description: { en: '', es: '' },
+    run: async (_args, ctx) => {
+      ctx.print(<div className="c-dim"><Spinner text={_(ctx.lang, 'Querying Vercel analytics', 'Consultando analytics Vercel')} /></div>);
+      await sleep(450);
+      ctx.print(<div><span className="c-green">✓</span> <span className="c-dim">{_(ctx.lang, 'Vercel Web Analytics is enabled · privacy-friendly · no cookies', 'Vercel Web Analytics activado · privacy-friendly · sin cookies')}</span></div>);
+      await sleep(120);
+      const dashboardUrl = process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_URL ?? 'https://vercel.com/dashboard';
+      return (
+        <div className="fade-in">
+          <div className="heading">📊 {_(ctx.lang, 'Site analytics', 'Analytics del sitio')}</div>
+          <div className="box" style={{ marginLeft: 12 }}>
+            <StaggerReveal delayMs={120}>
+              <div className="c-fg" style={{ marginBottom: 8 }}>
+                {_(ctx.lang,
+                  'Page views, top countries, devices, and browsers are tracked privately by Vercel Web Analytics.',
+                  'Page views, top países, dispositivos y browsers son rastreados por Vercel Web Analytics (privacy-friendly).')}
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <span className="c-dim">{_(ctx.lang, 'Tracked:', 'Se rastrea:')}</span>{' '}
+                <span className="tag">page views</span>
+                <span className="tag">unique visitors</span>
+                <span className="tag">countries</span>
+                <span className="tag">devices</span>
+                <span className="tag">referrers</span>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <span className="c-dim">{_(ctx.lang, 'NOT tracked:', 'NO se rastrea:')}</span>{' '}
+                <span className="c-fg">{_(ctx.lang, 'IPs, cookies, individual sessions, command-level activity', 'IPs, cookies, sesiones individuales, comandos ejecutados')}</span>
+              </div>
+              <div style={{ marginTop: 12, padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                <div className="c-dim" style={{ fontSize: 12.5, marginBottom: 4 }}>
+                  {_(ctx.lang, '▸ Numbers live in the Vercel dashboard:', '▸ Los números viven en el dashboard de Vercel:')}
+                </div>
+                <a href={dashboardUrl} target="_blank" rel="noreferrer">{dashboardUrl}</a>
+              </div>
+              <div className="c-dim" style={{ marginTop: 8, fontSize: 11.5 }}>
+                {_(ctx.lang,
+                  '(For per-command tracking — what people typed — would need a backend logger like Upstash Redis.)',
+                  '(Para tracking por comando — qué teclea la gente — necesitarías un logger backend tipo Upstash Redis.)')}
+              </div>
+            </StaggerReveal>
+          </div>
+        </div>
+      );
+    },
+  },
+
   banner: {
     name: 'banner',
     aliases: ['toilet'],
