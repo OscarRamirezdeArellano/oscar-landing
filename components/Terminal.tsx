@@ -11,7 +11,7 @@ import ContactFormOverlay from './ContactFormOverlay';
 import ChatOverlay from './ChatOverlay';
 import VoidOverlay from './VoidOverlay';
 import Sidebar from './Sidebar';
-import { playKey, playEnter, initAudio } from '@/lib/audio';
+import { playKey, playEnter, initAudio, warmAudio } from '@/lib/audio';
 
 type Line = { id: number; node: React.ReactNode };
 type Overlay = { type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void'; payload?: unknown } | null;
@@ -389,6 +389,22 @@ export default function Terminal() {
               aria-label="toggle command palette"
             >
               ☰
+            </button>
+            <button
+              className={`audio-toggle ${audioOn ? 'active' : ''}`}
+              onClick={() => {
+                const next = !audioOn;
+                setAudioOnState(next);
+                if (next) warmAudio();
+              }}
+              title={
+                audioOn
+                  ? lang === 'en' ? 'Mute keypress sounds' : 'Silenciar teclado'
+                  : lang === 'en' ? 'Enable keypress sounds' : 'Activar sonido de teclado'
+              }
+              aria-label="toggle keypress sound"
+            >
+              {audioOn ? '♪' : '♪̸'}
             </button>
             <div className="lang-toggle" role="group" aria-label="language">
               <button
