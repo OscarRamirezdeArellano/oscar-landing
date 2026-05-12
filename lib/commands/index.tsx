@@ -19,6 +19,7 @@ import {
   NeofetchView,
 } from '@/components/views';
 import { Spinner, BarRow, StaggerReveal, ProgressBar, sleep } from '@/components/Loaders';
+import { warmAudio } from '../audio';
 import { SERVICES } from '../data/services';
 import { STATUS, DIFFERENTIATION, CHANGELOG } from '../data/status';
 import { figletize } from '../ascii-font';
@@ -358,10 +359,18 @@ const COMMANDS: Record<string, Command> = {
       const target = args[0];
       const next = target === 'on' ? true : target === 'off' ? false : !ctx.audioOn;
       ctx.setAudioOn(next);
+      // When turning on: play a confirmation beep (also "warms" AudioContext
+      // on a real user gesture so subsequent keypresses actually make sound).
+      if (next) warmAudio();
       return (
         <div>
           <span className="c-green">●</span> {_(ctx.lang, 'Audio', 'Audio')}:{' '}
           <span className={next ? 'c-accent' : 'c-dim'}>{next ? 'on' : 'off'}</span>
+          {next && (
+            <span className="c-dim" style={{ marginLeft: 12, fontSize: 12 }}>
+              ♪ {_(ctx.lang, 'beep test — type any key to hear it', 'beep test — teclea cualquier letra para oírlo')}
+            </span>
+          )}
         </div>
       );
     },
