@@ -11,7 +11,7 @@ import ContactFormOverlay from './ContactFormOverlay';
 import ChatOverlay from './ChatOverlay';
 import VoidOverlay from './VoidOverlay';
 import Sidebar from './Sidebar';
-import { playKey, playEnter } from '@/lib/audio';
+import { playKey, playEnter, initAudio } from '@/lib/audio';
 
 type Line = { id: number; node: React.ReactNode };
 type Overlay = { type: 'matrix' | 'vim' | 'hack' | 'contact-form' | 'chat' | 'void'; payload?: unknown } | null;
@@ -267,6 +267,27 @@ export default function Terminal() {
     };
     body.addEventListener('click', handler);
     return () => body.removeEventListener('click', handler);
+  }, []);
+
+  // === Init AudioContext on first user gesture (any key or click) ===
+  // Browsers block AudioContext until a user gesture happens. We attach a
+  // one-shot listener on mount so the context is unlocked early, before the
+  // user even types `audio on` — that way the very first beep actually plays.
+  useEffect(() => {
+    let done = false;
+    const handler = () => {
+      if (done) return;
+      done = true;
+      initAudio();
+      window.removeEventListener('keydown', handler, true);
+      window.removeEventListener('pointerdown', handler, true);
+    };
+    window.addEventListener('keydown', handler, true);
+    window.addEventListener('pointerdown', handler, true);
+    return () => {
+      window.removeEventListener('keydown', handler, true);
+      window.removeEventListener('pointerdown', handler, true);
+    };
   }, []);
 
   // === Key handler ===
